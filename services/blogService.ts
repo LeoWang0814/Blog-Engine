@@ -17,17 +17,30 @@ interface BlogManifest {
 }
 
 /**
- * Fetches the manifest file to understand the current blog structure.
+ * Robust fetch for the manifest that tries multiple common path patterns
+ * to handle different deployment environments (root vs sub-path).
  */
 async function getManifest(): Promise<BlogManifest> {
-  try {
-    const response = await fetch('./myBlog/manifest.json');
-    if (!response.ok) throw new Error("Manifest not found");
-    return await response.json();
-  } catch (e) {
-    console.error("Failed to load blog manifest:", e);
-    return { categories: [] };
+  const paths = [
+    'myBlog/manifest.json',
+    './myBlog/manifest.json',
+    '/myBlog/manifest.json'
+  ];
+
+  for (const path of paths) {
+    try {
+      const response = await fetch(path);
+      if (response.ok) {
+        return await response.json();
+      }
+    } catch (e) {
+      // Continue to next path if fetch fails
+      continue;
+    }
   }
+
+  console.error("Critical: Failed to load blog manifest from any known path.");
+  return { categories: [] };
 }
 
 /**
@@ -42,6 +55,11 @@ export async function fetchAllPosts(): Promise<Post[]> {
       // Convert hyphens to spaces for the displayed title
       const displayTitle = postItem.filename.replace(/-/g, ' ');
       
+      const categoryPath = encodeURIComponent(catGroup.name);
+      const fileSlot = encodeURIComponent(postItem.filename);
+      // Construct URL relative to the site root
+      const rawUrl = `myBlog/${categoryPath}/${fileSlot}.md`;
+
       allPosts.push({
         slug: postItem.filename,
         category: catGroup.name,
@@ -50,7 +68,7 @@ export async function fetchAllPosts(): Promise<Post[]> {
         tags: [],
         summary: postItem.summary,
         content: '',
-        rawUrl: `./myBlog/${encodeURIComponent(catGroup.name)}/${encodeURIComponent(postItem.filename)}.md`,
+        rawUrl: rawUrl,
         path: `${catGroup.name}/${postItem.filename}.md`
       });
     });
@@ -70,10 +88,25 @@ export async function fetchPostContent(category: string, slug: string): Promise<
 
     const encodedCategory = encodeURIComponent(category);
     const encodedSlug = encodeURIComponent(slug);
-    const url = `./myBlog/${encodedCategory}/${encodedSlug}.md`;
+    const relativeUrl = `myBlog/${encodedCategory}/${encodedSlug}.md`;
     
-    const response = await fetch(url);
-    if (!response.ok) throw new Error(`Markdown file not found at ${url}`);
+    // Try multiple path variants for the markdown file content
+    const pathsToTry = [relativeUrl, `./${relativeUrl}`, `/${relativeUrl}`];
+    let response: Response | null = null;
+
+    for (const p of pathsToTry) {
+      try {
+        const r = await fetch(p);
+        if (r.ok) {
+          response = r;
+          break;
+        }
+      } catch (e) {}
+    }
+
+    if (!response || !response.ok) {
+      throw new Error(`Markdown file not found for: ${category}/${slug}`);
+    }
     
     const content = await response.text();
     
@@ -85,11 +118,11 @@ export async function fetchPostContent(category: string, slug: string): Promise<
       tags: [],
       summary: postData?.summary || "",
       content: content,
-      rawUrl: url,
+      rawUrl: relativeUrl,
       path: `${category}/${slug}.md`
     };
   } catch (e) {
-    console.error(`Error loading local post: ${category}/${slug}`, e);
+    console.error(`Error loading content for post: ${category}/${slug}`, e);
     return null;
   }
 }
