@@ -17,14 +17,14 @@ interface BlogManifest {
 }
 
 /**
- * Robust fetch for the manifest that tries multiple common path patterns
- * to handle different deployment environments (root vs sub-path).
+ * 更加稳健的 manifest 加载逻辑。
+ * 在 Vercel 部署中，public 目录的内容被映射为根路径内容。
  */
 async function getManifest(): Promise<BlogManifest> {
   const paths = [
-    'myBlog/manifest.json',
-    './myBlog/manifest.json',
-    '/myBlog/manifest.json'
+    '/myblog/manifest.json', // 首选：绝对路径
+    'myblog/manifest.json',  // 备选：相对路径
+    './myblog/manifest.json'
   ];
 
   for (const path of paths) {
@@ -34,17 +34,16 @@ async function getManifest(): Promise<BlogManifest> {
         return await response.json();
       }
     } catch (e) {
-      // Continue to next path if fetch fails
       continue;
     }
   }
 
-  console.error("Critical: Failed to load blog manifest from any known path.");
+  console.error("Critical: Failed to load blog manifest. Ensure 'public/myblog/manifest.json' exists and is lowercase.");
   return { categories: [] };
 }
 
 /**
- * Returns metadata for all posts from the manifest.
+ * 获取所有文章元数据
  */
 export async function fetchAllPosts(): Promise<Post[]> {
   const manifest = await getManifest();
@@ -52,13 +51,12 @@ export async function fetchAllPosts(): Promise<Post[]> {
 
   manifest.categories.forEach(catGroup => {
     catGroup.posts.forEach(postItem => {
-      // Convert hyphens to spaces for the displayed title
       const displayTitle = postItem.filename.replace(/-/g, ' ');
-      
       const categoryPath = encodeURIComponent(catGroup.name);
       const fileSlot = encodeURIComponent(postItem.filename);
-      // Construct URL relative to the site root
-      const rawUrl = `myBlog/${categoryPath}/${fileSlot}.md`;
+      
+      // 使用小写 myblog 绝对路径
+      const rawUrl = `/myblog/${categoryPath}/${fileSlot}.md`;
 
       allPosts.push({
         slug: postItem.filename,
@@ -78,7 +76,7 @@ export async function fetchAllPosts(): Promise<Post[]> {
 }
 
 /**
- * Fetches the full content of a specific post by its category and filename.
+ * 获取具体文章内容
  */
 export async function fetchPostContent(category: string, slug: string): Promise<Post | null> {
   try {
@@ -88,15 +86,16 @@ export async function fetchPostContent(category: string, slug: string): Promise<
 
     const encodedCategory = encodeURIComponent(category);
     const encodedSlug = encodeURIComponent(slug);
-    const relativeUrl = `myBlog/${encodedCategory}/${encodedSlug}.md`;
     
-    // Try multiple path variants for the markdown file content
-    const pathsToTry = [relativeUrl, `./${relativeUrl}`, `/${relativeUrl}`];
+    // 强制使用小写 myblog 路径
+    const primaryUrl = `/myblog/${encodedCategory}/${encodedSlug}.md`;
+    const fallbackUrl = `myblog/${encodedCategory}/${encodedSlug}.md`;
+    
     let response: Response | null = null;
 
-    for (const p of pathsToTry) {
+    for (const url of [primaryUrl, fallbackUrl]) {
       try {
-        const r = await fetch(p);
+        const r = await fetch(url);
         if (r.ok) {
           response = r;
           break;
@@ -105,7 +104,7 @@ export async function fetchPostContent(category: string, slug: string): Promise<
     }
 
     if (!response || !response.ok) {
-      throw new Error(`Markdown file not found for: ${category}/${slug}`);
+      throw new Error(`Markdown not found: /myblog/${category}/${slug}.md`);
     }
     
     const content = await response.text();
@@ -118,7 +117,7 @@ export async function fetchPostContent(category: string, slug: string): Promise<
       tags: [],
       summary: postData?.summary || "",
       content: content,
-      rawUrl: relativeUrl,
+      rawUrl: primaryUrl,
       path: `${category}/${slug}.md`
     };
   } catch (e) {

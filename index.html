@@ -19,7 +19,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-javascript.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-typescript.min.js"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/div/prism/1.29.0/themes/prism.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism.min.css">
     
     <style>
         body {
@@ -48,15 +48,15 @@
         }
         
         @keyframes flash {
-            0% { background-color: rgba(37, 99, 235, 0.08); }
-            100% { background-color: transparent; }
+            0% { background-color: rgba(37, 99, 235, 0.15); box-shadow: 0 0 0 8px rgba(37, 99, 235, 0.15); }
+            100% { background-color: transparent; box-shadow: 0 0 0 0 transparent; }
         }
         .highlight-flash {
-            animation: flash 2s ease-out;
-            border-radius: 6px;
+            animation: flash 2s cubic-bezier(0.4, 0, 0.2, 1);
+            border-radius: 4px;
         }
 
-        /* Markdown & Prose Optimized for max-w-4xl */
+        /* Markdown & Prose Optimized */
         .prose-container {
             color: #475569;
             line-height: 1.85;
@@ -94,10 +94,28 @@
             position: absolute;
             top: 0.75rem;
             right: 0.75rem;
-            opacity: 0.4;
+            opacity: 0.6;
             transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 4px;
         }
         pre:hover .copy-btn { opacity: 1; }
+
+        /* 解决代码块干扰的核心 CSS */
+        .prose-container pre code,
+        .prose-container pre span,
+        .prose-container .token { 
+            text-shadow: none !important;
+            background: none !important;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .prose-container .token.operator, 
+        .prose-container .token.punctuation {
+            background: none !important;
+            text-shadow: none !important;
+        }
 
         .prose-container pre code { 
             background: transparent !important; 
@@ -116,6 +134,35 @@
             font-size: 0.85em; 
             font-weight: 700;
             font-family: 'JetBrains Mono', monospace !important;
+            text-shadow: none !important;
+        }
+
+        /* 脚注系统增强 */
+        .footnotes {
+            margin-top: 5rem;
+            padding-top: 3rem;
+            border-top: 1px solid #f1f5f9;
+            font-size: 0.9rem;
+            color: #64748b;
+        }
+        .footnotes hr { display: none; } /* 移除 marked 默认多余的 hr */
+        .footnotes li {
+            scroll-margin-top: 140px; 
+            margin-bottom: 1rem;
+            line-height: 1.6;
+        }
+        /* 脚注回跳链接（返回正文） */
+        .footnote-backref {
+            margin-left: 0.5rem;
+            color: #3b82f6 !important;
+            text-decoration: none !important;
+            font-weight: 900;
+            font-size: 1.1em;
+        }
+        /* 正文中的脚注序号跳转目标 */
+        [id^="fnref:"] {
+            scroll-margin-top: 140px;
+            display: inline-block;
         }
 
         .prose-container table {
@@ -139,20 +186,6 @@
         .prose-container td {
             padding: 1.25rem;
             border-bottom: 1px solid #f8fafc;
-        }
-
-        .footnotes {
-            margin-top: 5rem;
-            padding-top: 3rem;
-            border-top: 1px solid #f1f5f9;
-            font-size: 0.9rem;
-            color: #94a3b8;
-        }
-        .footnote-backref {
-            margin-left: 0.5rem;
-            color: #3b82f6 !important;
-            text-decoration: none !important;
-            font-weight: 900;
         }
 
         ::-webkit-scrollbar { width: 6px; }
