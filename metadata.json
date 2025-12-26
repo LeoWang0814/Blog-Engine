@@ -1,0 +1,5 @@
+{
+  "name": "Blueprint Blog Engine",
+  "description": "A premium engineering blueprint styled blog that pulls content dynamically from a GitHub repository, featuring glassmorphism UI and a high-readability reading experience.",
+  "requestFramePermissions": []
+}

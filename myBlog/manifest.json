@@ -1,0 +1,65 @@
+
+{
+  "categories": [
+    {
+      "name": "YOLO",
+      "posts": [
+        {
+          "filename": "yolo-deployment",
+          "summary": "Step-by-step guide to deploying YOLO models in production environments.",
+          "date": "2025-01-12"
+        },
+        {
+          "filename": "best-way-to-train-yolo-copy",
+          "summary": "Optimization techniques and dataset preparation for superior object detection results.",
+          "date": "2024-12-20"
+        }
+      ]
+    },
+    {
+      "name": "AI",
+      "posts": [
+        {
+          "filename": "why-ai-matters",
+          "summary": "An analysis of artificial intelligence's impact on modern engineering and data science.",
+          "date": "2025-02-05"
+        },
+        {
+          "filename": "My-experience-on-AI-model-copy",
+          "summary": "Personal insights and lessons learned from replicating state-of-the-art AI architectures.",
+          "date": "2024-11-15"
+        }
+      ]
+    },
+    {
+      "name": "Python",
+      "posts": [
+        {
+          "filename": "5-top-libs",
+          "summary": "A curated list of the most powerful Python libraries for scientific computing and automation.",
+          "date": "2025-01-28"
+        },
+        {
+          "filename": "why-I-love-python-copy",
+          "summary": "Exploring the elegance and versatility of the Python programming language.",
+          "date": "2024-10-10"
+        }
+      ]
+    },
+    {
+      "name": "CFD",
+      "posts": [
+        {
+          "filename": "the-best-cfd-software",
+          "summary": "Comparing top Computational Fluid Dynamics tools for professional research.",
+          "date": "2024-09-22"
+        },
+        {
+          "filename": "my-favourate-cfd-project-copy",
+          "summary": "A deep dive into a complex fluid simulation project and its results.",
+          "date": "2024-08-30"
+        }
+      ]
+    }
+  ]
+}

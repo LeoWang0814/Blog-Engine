@@ -1,0 +1,177 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Leo's Blog | Engineering Archive</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    
+    <!-- Markdown & Plugins -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked-footnote/dist/index.umd.js"></script>
+    
+    <!-- Syntax Highlighting -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-javascript.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-typescript.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism.min.css">
+    
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #fcfdfe;
+            color: #1e293b;
+            overflow-x: hidden;
+        }
+        .mono {
+            font-family: 'JetBrains Mono', monospace;
+        }
+        .blueprint-grid {
+            background-image: linear-gradient(rgba(37, 99, 235, 0.025) 1px, transparent 1px),
+                              linear-gradient(90deg, rgba(37, 99, 235, 0.025) 1px, transparent 1px);
+            background-size: 40px 40px;
+        }
+        .blueprint-subgrid {
+            background-image: linear-gradient(rgba(37, 99, 235, 0.01) 1px, transparent 1px),
+                              linear-gradient(90deg, rgba(37, 99, 235, 0.01) 1px, transparent 1px);
+            background-size: 10px 10px;
+        }
+        .glass-header {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(16px);
+            border-bottom: 1px solid rgba(241, 245, 249, 0.8);
+        }
+        
+        @keyframes flash {
+            0% { background-color: rgba(37, 99, 235, 0.08); }
+            100% { background-color: transparent; }
+        }
+        .highlight-flash {
+            animation: flash 2s ease-out;
+            border-radius: 6px;
+        }
+
+        /* Markdown & Prose Optimized for max-w-4xl */
+        .prose-container {
+            color: #475569;
+            line-height: 1.85;
+            font-size: 1.05rem;
+        }
+        .prose-container h1 { font-size: 2.5rem; font-weight: 800; color: #0f172a; margin: 3.5rem 0 2rem; letter-spacing: -0.04em; text-transform: uppercase; }
+        .prose-container h2 { font-size: 1.85rem; font-weight: 700; color: #1e293b; margin: 4rem 0 1.5rem; letter-spacing: -0.02em; border-bottom: 2px solid #f8fafc; padding-bottom: 0.5rem; scroll-margin-top: 120px; }
+        .prose-container h3 { font-size: 1.35rem; font-weight: 700; color: #334155; margin: 2.5rem 0 1rem; scroll-margin-top: 120px; }
+        
+        .prose-container p { margin-bottom: 1.6rem; }
+        
+        .prose-container a {
+            color: #2563eb;
+            text-decoration: underline;
+            text-underline-offset: 4px;
+            font-weight: 700;
+            transition: all 0.2s;
+        }
+        .prose-container a:hover {
+            background-color: #eff6ff;
+            color: #1d4ed8;
+        }
+
+        .prose-container pre { 
+            position: relative !important;
+            background: #0f172a !important; 
+            border-radius: 1.25rem; 
+            padding: 2.5rem 1.5rem 1.5rem !important; 
+            margin: 3rem 0; 
+            overflow-x: auto;
+            border: 1px solid #1e293b;
+        }
+        
+        .copy-btn {
+            position: absolute;
+            top: 0.75rem;
+            right: 0.75rem;
+            opacity: 0.4;
+            transition: all 0.2s;
+        }
+        pre:hover .copy-btn { opacity: 1; }
+
+        .prose-container pre code { 
+            background: transparent !important; 
+            color: #cbd5e1 !important; 
+            padding: 0 !important;
+            font-family: 'JetBrains Mono', monospace !important;
+            font-size: 0.9rem;
+            line-height: 1.6;
+        }
+
+        .prose-container :not(pre) > code { 
+            background: #f1f5f9; 
+            color: #3b82f6; 
+            padding: 0.15rem 0.4rem; 
+            border-radius: 0.4rem; 
+            font-size: 0.85em; 
+            font-weight: 700;
+            font-family: 'JetBrains Mono', monospace !important;
+        }
+
+        .prose-container table {
+            width: 100%;
+            margin: 3rem 0;
+            font-size: 0.95rem;
+            border-radius: 1rem;
+            overflow: hidden;
+            border: 1px solid #f1f5f9;
+        }
+        .prose-container th {
+            background-color: #f8fafc;
+            color: #64748b;
+            padding: 1.25rem;
+            text-align: left;
+            border-bottom: 2px solid #f1f5f9;
+            text-transform: uppercase;
+            font-size: 0.7rem;
+            letter-spacing: 0.1em;
+        }
+        .prose-container td {
+            padding: 1.25rem;
+            border-bottom: 1px solid #f8fafc;
+        }
+
+        .footnotes {
+            margin-top: 5rem;
+            padding-top: 3rem;
+            border-top: 1px solid #f1f5f9;
+            font-size: 0.9rem;
+            color: #94a3b8;
+        }
+        .footnote-backref {
+            margin-left: 0.5rem;
+            color: #3b82f6 !important;
+            text-decoration: none !important;
+            font-weight: 900;
+        }
+
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #f8fafc; }
+        ::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #cbd5e1; }
+    </style>
+<script type="importmap">
+{
+  "imports": {
+    "react/": "https://esm.sh/react@^19.2.3/",
+    "react": "https://esm.sh/react@^19.2.3",
+    "react-dom/": "https://esm.sh/react-dom@^19.2.3/",
+    "react-router-dom": "https://esm.sh/react-router-dom@^7.11.0"
+  }
+}
+</script>
+</head>
+<body>
+    <div id="root"></div>
+</body>
+</html>
