@@ -1,5 +1,19 @@
 
 {
+  "status": {
+    "building": {
+      "title": "Agentic Workflow Engine",
+      "detail": "Developing a robust framework for LLM-based autonomous agents with complex task decomposition."
+    },
+    "learning": {
+      "title": "Numerical Analysis",
+      "detail": "Deep diving into finite element methods and high-order discretization for fluid dynamics."
+    },
+    "writing": {
+      "title": "The Art of Deployment",
+      "detail": "A comprehensive guide on CI/CD pipelines for distributed edge computing systems."
+    }
+  },
   "categories": [
     {
       "name": "YOLO",

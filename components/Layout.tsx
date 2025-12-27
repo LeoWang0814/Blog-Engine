@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-// @ts-ignore - Fix for react-router-dom type mismatch in this environment
+// @ts-ignore
 import { Link, NavLink, useNavigate, useLocation } from 'react-router-dom';
 import BlueprintBackground from './BlueprintBackground';
 
@@ -16,20 +16,15 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   useEffect(() => {
     const params = new URLSearchParams(location.search);
     const q = params.get('q');
-    if (q !== null && q !== searchQuery) {
-      setSearchQuery(q);
-    }
+    if (q !== null && q !== searchQuery) setSearchQuery(q);
   }, [location.search]);
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value;
     setSearchQuery(val);
     const params = new URLSearchParams(location.search);
-    if (val.trim()) {
-      params.set('q', val);
-    } else {
-      params.delete('q');
-    }
+    if (val.trim()) params.set('q', val);
+    else params.delete('q');
     navigate(`/posts?${params.toString()}`, { replace: true });
   };
 
@@ -44,7 +39,6 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
       <BlueprintBackground />
       
       <header className="sticky top-0 z-50 glass-header px-6 py-4">
-        {/* 统一使用 max-w-6xl 并居中 */}
         <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
           <Link to="/" className="flex items-center gap-4 group shrink-0">
             <div className="relative">
@@ -55,25 +49,19 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
             </div>
             <div className="flex flex-col">
               <span className="text-lg font-black tracking-tighter text-slate-900 uppercase leading-none">Leo Wang</span>
-              <span className="text-[8px] text-blue-600 uppercase font-black tracking-[0.3em] mt-1">Operational Archive</span>
+              <span className="text-[8px] text-blue-600 uppercase font-black tracking-[0.3em] mt-1">Blogs Archive</span>
             </div>
           </Link>
 
           <nav className="flex items-center gap-8">
             <NavLink to="/" className={navItemClass}>
-              {({isActive}: any) => (
-                <span className="relative">Home<span className={activeLine(isActive)}></span></span>
-              )}
+              {({isActive}: any) => <span className="relative">Home<span className={activeLine(isActive)}></span></span>}
             </NavLink>
             <NavLink to="/posts" className={navItemClass}>
-              {({isActive}: any) => (
-                <span className="relative">Archive<span className={activeLine(isActive)}></span></span>
-              )}
+              {({isActive}: any) => <span className="relative">Archive<span className={activeLine(isActive)}></span></span>}
             </NavLink>
             <NavLink to="/about" className={navItemClass}>
-              {({isActive}: any) => (
-                <span className="relative">About<span className={activeLine(isActive)}></span></span>
-              )}
+              {({isActive}: any) => <span className="relative">About<span className={activeLine(isActive)}></span></span>}
             </NavLink>
           </nav>
 
@@ -95,44 +83,46 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
         </div>
       </main>
 
-      <footer className="bg-white border-t border-slate-100 py-20 relative z-10">
+      <footer className="bg-white border-t border-slate-100 py-20 relative z-10 overflow-hidden">
         <div className="max-w-6xl mx-auto px-6">
-          <div className="grid grid-cols-1 md:grid-cols-12 gap-12 items-start">
-            <div className="md:col-span-4 space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-16 items-start">
+            <div className="space-y-6">
               <div className="flex items-center gap-3">
                 <div className="w-8 h-8 bg-slate-900 text-white flex items-center justify-center font-black text-xs">LW</div>
                 <span className="font-black text-lg text-slate-900 uppercase tracking-tighter">Leo Wang</span>
               </div>
               <p className="text-xs text-slate-400 leading-relaxed font-medium">
-                Systematic documentation of engineering breakthroughs and theoretical exploration in high-performance computing and physics.
+                Systematic documentation of projects, tools, and engineering thinking — built to be practical and reusable.
               </p>
             </div>
 
-            <div className="md:col-span-5 grid grid-cols-2 gap-8">
-              <div className="space-y-4">
-                <h4 className="text-[9px] font-black uppercase tracking-[0.3em] text-blue-600">Access</h4>
-                <ul className="space-y-2">
-                  <li><Link to="/" className="text-xs text-slate-500 hover:text-blue-600 font-bold transition-colors">Home</Link></li>
-                  <li><Link to="/posts" className="text-xs text-slate-500 hover:text-blue-600 font-bold transition-colors">Archive</Link></li>
-                  <li><Link to="/about" className="text-xs text-slate-500 hover:text-blue-600 font-bold transition-colors">Personnel</Link></li>
-                </ul>
-              </div>
-              <div className="space-y-4">
-                <h4 className="text-[9px] font-black uppercase tracking-[0.3em] text-blue-600">Protocol</h4>
-                <ul className="space-y-2">
-                  <li><a href="https://github.com/LeoWang0814" className="text-xs text-slate-500 hover:text-blue-600 font-bold transition-colors">GitHub</a></li>
-                  <li><a href="mailto:leowang@blueberryowo.me" className="text-xs text-slate-500 hover:text-blue-600 font-bold transition-colors">Secure Mail</a></li>
-                </ul>
-              </div>
+            <div className="space-y-4 md:text-center">
+              <h4 className="text-[9px] font-black uppercase tracking-[0.3em] text-blue-600">Access</h4>
+              <ul className="space-y-2">
+                <li><Link to="/posts" className="text-xs text-slate-500 hover:text-blue-600 font-bold transition-colors">My Blogs</Link></li>
+                <li><Link to="/about" className="text-xs text-slate-500 hover:text-blue-600 font-bold transition-colors">About Me</Link></li>
+                <li><a href="https://github.com/LeoWang0814/" className="text-xs text-slate-500 hover:text-blue-600 font-bold transition-colors">View My GitHub</a></li>
+              </ul>
             </div>
 
-            <div className="md:col-span-3 md:text-right space-y-4">
-              <h4 className="text-[9px] font-black uppercase tracking-[0.3em] text-blue-600">Archive Status</h4>
-              <p className="text-[10px] text-slate-400 font-black tracking-widest leading-loose">
-                REDACTED &copy; {new Date().getFullYear()}<br />
-                ENGINEERING V2.5.0
-              </p>
+            <div className="space-y-4 md:text-right">
+              <h4 className="text-[9px] font-black uppercase tracking-[0.3em] text-blue-600">Contact</h4>
+              <ul className="space-y-2">
+                <li><a href="https://github.com/LeoWang0814" className="text-xs text-slate-500 hover:text-blue-600 font-bold transition-colors">GitHub Profile</a></li>
+                <li><a href="mailto:leowang@blueberryowo.me" className="text-xs text-slate-500 hover:text-blue-600 font-bold transition-colors">Email</a></li>
+              </ul>
             </div>
+          </div>
+
+          <div className="mt-20 pt-10 border-t border-slate-50 text-center space-y-2">
+            <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">© 2025 Leo Wang</p>
+            <p className="text-[9px] text-slate-300 font-medium">Site source code is licensed under MIT.</p>
+            <p className="text-[9px] text-slate-300 font-medium max-w-2xl mx-auto leading-relaxed">
+              All articles and written content are protected by copyright and may not be redistributed without permission.
+            </p>
+            <p className="pt-4 text-[10px] font-black uppercase tracking-widest text-slate-900">
+              Deploy your own copy: <a href="https://github.com/LeoWang0814/Blog-Engine" className="text-blue-600 hover:underline">Click Here</a>
+            </p>
           </div>
         </div>
       </footer>
