@@ -59,7 +59,7 @@ const Home: React.FC = () => {
              <div className="relative group">
                 <div className="w-64 h-64 rounded-full overflow-hidden border-4 border-white shadow-2xl relative z-10 transition-transform duration-500 group-hover:scale-105">
                    <img 
-                     src="https://youke2.picui.cn/s1/2025/12/22/694936dca528e.jpg" 
+                     src="https://www.helloimg.com/i/2025/12/28/695137b020f5b.jpg" 
                      alt="Leo Wang" 
                      className="w-full h-full object-cover"
                    />

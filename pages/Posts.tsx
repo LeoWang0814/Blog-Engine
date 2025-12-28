@@ -55,7 +55,7 @@ const Posts: React.FC = () => {
           </div>
           <h1 className="text-5xl md:text-6xl font-black text-slate-900 tracking-tighter uppercase leading-none">The Archive.</h1>
           <p className="text-slate-400 font-medium max-w-xl text-base">
-            Systematically organized engineering blueprints and technical research logs.
+            Documenting projects, problem-solving, and reflections along the way—together with you, turning creative visions into tangible reality.
           </p>
         </div>
         
