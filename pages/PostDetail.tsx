@@ -1,5 +1,5 @@
 
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef, useCallback } from 'react';
 // @ts-ignore
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { fetchPostContent } from '../services/blogService';
@@ -11,34 +11,52 @@ interface TocItem {
   level: number;
 }
 
+interface ZoomState {
+  src: string;
+  rect: DOMRect;
+  scale: number;
+  pan: { x: number; y: number };
+}
+
 const PostDetail: React.FC = () => {
   const { category, slug } = useParams<{ category: string; slug: string }>();
   const [post, setPost] = useState<Post | null>(null);
   const [loading, setLoading] = useState(true);
   const [toc, setToc] = useState<TocItem[]>([]);
   const contentRef = useRef<HTMLDivElement>(null);
+  const overlayRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
 
-  // 核心滚动函数：确保 Header 偏移量和视觉反馈一致
-  // 移除了 pushState 以避免在特定沙盒环境下的 SecurityError
+  // Zoom State
+  const [zoomedImage, setZoomedImage] = useState<ZoomState | null>(null);
+  const [isClosing, setIsClosing] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
+  const dragStartRef = useRef({ x: 0, y: 0 });
+  const hasDraggedRef = useRef(false);
+
+  // Smooth scroll logic for TOC
   const performSmoothScroll = (targetId: string) => {
     const element = document.getElementById(targetId);
     if (!element) return;
-
-    // 统一 Header 偏移量 (110px)
     const top = element.getBoundingClientRect().top + window.pageYOffset - 110;
-    
-    window.scrollTo({
-      top: top,
-      behavior: 'smooth'
-    });
-
-    // 视觉闪烁反馈
+    window.scrollTo({ top, behavior: 'smooth' });
     element.classList.add('highlight-flash');
     setTimeout(() => {
       if (element) element.classList.remove('highlight-flash');
     }, 2000);
   };
+
+  // Lock body scroll when zoom is active
+  useEffect(() => {
+    if (zoomedImage) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, [zoomedImage]);
 
   useEffect(() => {
     if (category && slug) {
@@ -64,11 +82,11 @@ const PostDetail: React.FC = () => {
       const htmlContent = marked.parse(post.content);
       contentRef.current.innerHTML = htmlContent;
       
-      // 代码高亮
+      // Syntax Highlighting
       // @ts-ignore
       if (window.Prism) { window.Prism.highlightAllUnder(contentRef.current); }
 
-      // 提取目录
+      // Table of Contents
       const headings = contentRef.current.querySelectorAll('h2, h3');
       const items: TocItem[] = Array.from(headings).map((h: any, idx) => {
         const id = `marker-${idx}`;
@@ -77,27 +95,64 @@ const PostDetail: React.FC = () => {
       });
       setToc(items);
       addCopyButtons(contentRef.current);
+
+      // Setup Image Zoom Listeners
+      const imgs = contentRef.current.querySelectorAll('img');
+      imgs.forEach(img => {
+        img.style.cursor = 'zoom-in';
+        img.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const rect = img.getBoundingClientRect();
+          setZoomedImage({
+            src: img.src,
+            rect: rect,
+            scale: 1,
+            pan: { x: 0, y: 0 }
+          });
+        });
+      });
     }
   }, [post, loading]);
 
-  // 统一拦截正文内的所有 Hash 链接（含脚注）
+  // Prevent whole page zoom when overlay is active (especially for trackpads)
+  useEffect(() => {
+    const handleOverlayWheel = (e: WheelEvent) => {
+      if (zoomedImage) {
+        e.preventDefault();
+        const delta = e.deltaY > 0 ? -0.2 : 0.2;
+        setZoomedImage(prev => {
+          if (!prev) return null;
+          const newScale = Math.min(Math.max(prev.scale + delta, 1), 5);
+          // If returning to scale 1, reset pan
+          const newPan = newScale === 1 ? { x: 0, y: 0 } : prev.pan;
+          return { ...prev, scale: newScale, pan: newPan };
+        });
+      }
+    };
+
+    const overlay = overlayRef.current;
+    if (overlay) {
+      overlay.addEventListener('wheel', handleOverlayWheel, { passive: false });
+    }
+    return () => {
+      if (overlay) {
+        overlay.removeEventListener('wheel', handleOverlayWheel);
+      }
+    };
+  }, [zoomedImage]);
+
   useEffect(() => {
     const handleInternalLinks = (e: MouseEvent) => {
       const target = e.target as HTMLElement;
       const anchor = target.closest('a');
-      
       if (anchor && anchor.hash && anchor.hash.startsWith('#')) {
         e.preventDefault();
-        // 兼容处理 ID 中包含冒号的情况（如 #fn:1）
         const id = decodeURIComponent(anchor.hash.slice(1));
         performSmoothScroll(id);
       }
     };
-
     const container = contentRef.current;
-    if (container) {
-      container.addEventListener('click', handleInternalLinks);
-    }
+    if (container) { container.addEventListener('click', handleInternalLinks); }
     return () => container?.removeEventListener('click', handleInternalLinks);
   }, [post, loading]);
 
@@ -107,26 +162,60 @@ const PostDetail: React.FC = () => {
       if (pre.querySelector('.copy-btn')) return;
       const button = document.createElement('button');
       button.className = 'copy-btn p-1.5 px-2.5 rounded-lg bg-slate-800/80 text-slate-300 hover:text-white hover:bg-slate-700 transition-all text-[9px] font-black uppercase tracking-widest border border-slate-700/50 backdrop-blur-md z-10';
-      
       const copyIcon = `<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>`;
       const checkIcon = `<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>`;
-      
       button.innerHTML = `${copyIcon}<span>Copy</span>`;
-      
       button.addEventListener('click', async () => {
         const code = pre.querySelector('code')?.innerText || '';
         try {
           await navigator.clipboard.writeText(code);
           button.innerHTML = `${checkIcon}<span class="text-blue-400">Copied</span>`;
-          button.classList.add('border-blue-500/50');
-          setTimeout(() => { 
-            button.innerHTML = `${copyIcon}<span>Copy</span>`;
-            button.classList.remove('border-blue-500/50');
-          }, 2000);
+          setTimeout(() => { button.innerHTML = `${copyIcon}<span>Copy</span>`; }, 2000);
         } catch (err) { console.error(err); }
       });
       pre.appendChild(button);
     });
+  };
+
+  const handleCloseZoom = useCallback(() => {
+    setIsClosing(true);
+    setTimeout(() => {
+      setZoomedImage(null);
+      setIsClosing(false);
+    }, 400); 
+  }, []);
+
+  const handleMouseDown = (e: React.MouseEvent) => {
+    if (!zoomedImage || zoomedImage.scale <= 1) return;
+    setIsDragging(true);
+    hasDraggedRef.current = false;
+    dragStartRef.current = { x: e.clientX, y: e.clientY };
+    e.preventDefault();
+  };
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (!isDragging || !zoomedImage) return;
+    
+    const dx = e.clientX - dragStartRef.current.x;
+    const dy = e.clientY - dragStartRef.current.y;
+
+    if (Math.abs(dx) > 2 || Math.abs(dy) > 2) {
+      hasDraggedRef.current = true;
+    }
+
+    setZoomedImage({
+      ...zoomedImage,
+      pan: {
+        x: zoomedImage.pan.x + dx,
+        y: zoomedImage.pan.y + dy
+      }
+    });
+
+    dragStartRef.current = { x: e.clientX, y: e.clientY };
+  };
+
+  const handleMouseUp = () => {
+    setIsDragging(false);
   };
 
   if (loading) {
@@ -152,7 +241,6 @@ const PostDetail: React.FC = () => {
   return (
     <div className="relative pb-24">
       <div className="max-w-6xl mx-auto">
-        {/* Breadcrumbs */}
         <nav className="mb-10 flex items-center justify-start gap-3 text-[9px] font-black uppercase tracking-widest text-slate-400">
           <Link to="/" className="hover:text-blue-600 transition-colors">Front</Link>
           <span>/</span>
@@ -162,7 +250,6 @@ const PostDetail: React.FC = () => {
         </nav>
 
         <article className="space-y-12">
-          {/* Header Section */}
           <header className="space-y-8 text-left max-w-4xl">
             <div className="flex items-center gap-4">
               <span className="px-2.5 py-1 bg-blue-50 text-blue-600 text-[9px] font-black uppercase rounded-md tracking-widest border border-blue-100">{post.category}</span>
@@ -173,7 +260,6 @@ const PostDetail: React.FC = () => {
             </h1>
           </header>
 
-          {/* Outline - 使用封装的滚动函数 */}
           {toc.length > 0 && (
             <div className="p-10 md:p-12 bg-white/60 backdrop-blur-sm rounded-[2.5rem] border border-slate-100 shadow-sm w-full">
               <div className="flex items-center gap-4 mb-8">
@@ -196,12 +282,10 @@ const PostDetail: React.FC = () => {
             </div>
           )}
 
-          {/* Content Body */}
           <div className="bg-white rounded-[3rem] p-8 md:p-16 lg:p-20 shadow-2xl shadow-slate-200/50 border border-slate-50 relative w-full flex justify-center">
             <div ref={contentRef} className="prose-container max-w-4xl w-full" />
           </div>
 
-          {/* Footer Navigation */}
           <div className="mt-16 p-10 md:p-12 bg-slate-900 rounded-[3rem] flex flex-col md:flex-row items-center justify-between gap-8 border border-slate-800 shadow-xl">
             <div className="space-y-2">
               <p className="text-[8px] font-black text-blue-400 uppercase tracking-[0.4em]">Operational Status</p>
@@ -221,6 +305,48 @@ const PostDetail: React.FC = () => {
           </div>
         </article>
       </div>
+
+      {/* Image Zoom Overlay */}
+      {zoomedImage && (
+        <div 
+          ref={overlayRef}
+          className={`fixed inset-0 z-[100] flex items-center justify-center transition-all duration-400 ease-[cubic-bezier(0.16,1,0.3,1)] ${isClosing ? 'opacity-0' : 'opacity-100'}`}
+          style={{ 
+            backdropFilter: isClosing ? 'blur(0px)' : 'blur(15px)', 
+            backgroundColor: isClosing ? 'transparent' : 'rgba(0,0,0,0.6)',
+            touchAction: 'none',
+            cursor: isDragging ? 'grabbing' : zoomedImage.scale > 1 ? 'grab' : 'zoom-out'
+          }}
+          onClick={() => { if (!hasDraggedRef.current) handleCloseZoom(); }}
+          onMouseDown={handleMouseDown}
+          onMouseMove={handleMouseMove}
+          onMouseUp={handleMouseUp}
+          onMouseLeave={handleMouseUp}
+        >
+          {/* Close Button UI - Enhanced border sharpness */}
+          <button 
+            className="absolute top-8 right-8 w-10 h-10 flex items-center justify-center bg-slate-900/60 backdrop-blur-md border border-white/50 rounded-xl text-white hover:text-white hover:bg-slate-900 transition-all duration-300 z-[110] shadow-xl"
+            onClick={(e) => { e.stopPropagation(); handleCloseZoom(); }}
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+          </button>
+
+          <div className="relative w-full h-full flex items-center justify-center overflow-hidden">
+            <img 
+              src={zoomedImage.src}
+              alt="Zoomed"
+              className={`max-w-[85%] max-h-[85%] object-contain shadow-2xl pointer-events-none ${isDragging ? '' : 'transition-transform duration-300 ease-out'}`}
+              style={{
+                transform: `scale(${zoomedImage.scale}) translate(${zoomedImage.pan.x / zoomedImage.scale}px, ${zoomedImage.pan.y / zoomedImage.scale}px)`,
+                borderRadius: '8px'
+              }}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 };

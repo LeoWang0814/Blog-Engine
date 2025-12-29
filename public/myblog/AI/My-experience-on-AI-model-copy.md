@@ -118,7 +118,7 @@ greet("World");
 
 下面是一张从外部图床加载的图片，用于测试图片解析与 HTTPS 资源加载：
 
-![Markdown Image Test](https://youke2.picui.cn/s1/2025/12/22/694936dca528e.jpg)
+![Markdown Image Test](https://www.helloimg.com/i/2025/12/28/695137b020f5b.jpg)
 
 ---
 

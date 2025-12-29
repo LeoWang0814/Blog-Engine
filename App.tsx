@@ -1,16 +1,27 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 // @ts-ignore
-import { HashRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { HashRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import Layout from './components/Layout';
 import Home from './pages/Home';
 import Posts from './pages/Posts';
 import PostDetail from './pages/PostDetail';
 import About from './pages/About';
 
+const ScrollToTop: React.FC = () => {
+  const { pathname, search } = useLocation();
+
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [pathname, search]);
+
+  return null;
+};
+
 const App: React.FC = () => {
   return (
     <Router>
+      <ScrollToTop />
       <Layout>
         <Routes>
           {/* 默认首页：确保应用启动时加载 Home */}
